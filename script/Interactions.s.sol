@@ -4,7 +4,7 @@ pragma solidity ^0.8.18;
 import {Script, console} from "forge-std/Script.sol";
 import {HelperConfig} from "./HelperConfig.s.sol";
 import {Raffle} from "../src/Raffle.sol";
-import {DevOpsTools} from "foundry-devops/src/DevOpsTools.sol";
+import {DevOpsTools} from "lib/foundry-devops/src/DevOpsTools.sol";
 import {VRFCoordinatorV2Mock} from "../test/mocks/VRFCoordinatorV2Mock.sol";
 import {LinkToken} from "../test/mocks/LinkToken.sol";
 
@@ -35,26 +35,24 @@ contract CreateSubscription is Script {
 }
 
 contract AddConsumer is Script {
-    function addConsumer(address contractToAddToVrf, address vrfCoordinator, uint64 subId, uint256 deployerKey)
-        public
-    {
-        console.log("Adding consumer contract: ", contractToAddToVrf);
-        console.log("Using vrfCoordinator: ", vrfCoordinator);
+    function addConsumer(address raffle, address vrfCoordinatorV2, uint64 subId, uint256 deployerKey) public {
+        console.log("Adding consumer contract: ", raffle);
+        console.log("Using vrfCoordinator: ", vrfCoordinatorV2);
         console.log("On ChainID: ", block.chainid);
         vm.startBroadcast(deployerKey);
-        VRFCoordinatorV2Mock(vrfCoordinator).addConsumer(subId, contractToAddToVrf);
+        VRFCoordinatorV2Mock(vrfCoordinatorV2).addConsumer(subId, raffle);
         vm.stopBroadcast();
     }
 
-    function addConsumerUsingConfig(address mostRecentlyDeployed) public {
+    function addConsumerUsingConfig(address raffle) public {
         HelperConfig helperConfig = new HelperConfig();
         (,, address vrfCoordinatorV2,,, uint64 subId,, uint256 deployerKey) = helperConfig.activeNetworkConfig();
-        addConsumer(mostRecentlyDeployed, vrfCoordinatorV2, subId, deployerKey);
+        addConsumer(raffle, vrfCoordinatorV2, subId, deployerKey);
     }
 
     function run() external {
-        address mostRecentlyDeployed = DevOpsTools.get_most_recent_deployment("Raffle", block.chainid);
-        addConsumerUsingConfig(mostRecentlyDeployed);
+        address raffle = DevOpsTools.get_most_recent_deployment("Raffle", block.chainid);
+        addConsumerUsingConfig(raffle);
     }
 }
 
@@ -65,7 +63,7 @@ contract FundSubscription is Script {
         HelperConfig helperConfig = new HelperConfig();
         (,, address vrfCoordinatorV2,, uint64 subId,, address link, uint256 deployerKey) =
             helperConfig.activeNetworkConfig();
-        console.log("Dit is de gelogde ", subId);
+        console.log("This is the parsed in subId ", subId);
         fundSubscription(vrfCoordinatorV2, subId, link, deployerKey);
     }
 
